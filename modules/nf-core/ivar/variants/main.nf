@@ -17,7 +17,7 @@ process IVAR_VARIANTS {
     script:
     def gene = referenceGene.split("\\|")[0]
     def gff_file_arg = ""
-    if (gff_files[gene] != null) {
+    if (gff_files.containsKey(gene)) {
         if (new File(gff_files[gene]).exists()) {
             gff_file_arg = "-g ${gff_files[gene]}"
         } else {
