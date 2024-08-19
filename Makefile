@@ -6,7 +6,7 @@ clean:
 	rm -rf work/ testing/output .nextflow.log* .nextflow/
 
 md5sum:
-	bash test/md5.sh
+	bash assets/test/md5.sh
 
 run-test:
 	nextflow run main.nf -profile test,mamba

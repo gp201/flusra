@@ -1,0 +1,1 @@
+This file is used in place of optional input arguments. This is a workaround for a limitation in Nextflow where optional arguments are not supported in the DSL2 syntax. See https://github.com/nextflow-io/nextflow/issues/1694

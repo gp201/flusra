@@ -35,4 +35,4 @@ compare_checksums() {
     done < <(find "$expected_dir" -type f -print0)
 }
 
-compare_checksums "test/output" "testing/output"
+compare_checksums "assets/test/output" "testing/output"
