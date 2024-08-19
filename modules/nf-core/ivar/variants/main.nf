@@ -8,7 +8,7 @@ process IVAR_VARIANTS {
     each referenceGene
     tuple val(sra), path(bamFile)
     path reference
-    path gff_file
+    val gff_files
 
     output:
     path "*_variants.tsv",         emit: variants
@@ -16,7 +16,14 @@ process IVAR_VARIANTS {
 
     script:
     def gene = referenceGene.split("\\|")[0]
-    def gff_file_arg = gff_file.name != "NO_FILE" ? "-g $gff_file" : ""
+    def gff_file_arg = ""
+    if (gff_files[gene] != null) {
+        if (new File(gff_files[gene]).exists()) {
+            gff_file_arg = "-g ${gff_files[gene]}"
+        } else {
+            throw new Exception("GFF file for gene $gene does not exist at ${gff_files[gene]}")
+        }
+    }
     """
     samtools index $bamFile
 
