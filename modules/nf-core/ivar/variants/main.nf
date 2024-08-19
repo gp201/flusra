@@ -16,7 +16,7 @@ process IVAR_VARIANTS {
 
     script:
     def gene = referenceGene.split("\\|")[0]
-    def gff_file_arg = gff_file == null ? "" : "-g $gff_file"
+    def gff_file_arg = gff_file == 'NO_FILE' ? '' : "--gff $gff_file"
     """
     samtools index $bamFile
 
