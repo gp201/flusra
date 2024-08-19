@@ -23,7 +23,7 @@ workflow FLUSRA {
             .set { headers_ch }
 
         IVAR_CONSENSUS(headers_ch, BWA_MEM.out.bam, params.reference)
-        IVAR_VARIANTS(headers_ch, BWA_MEM.out.bam, params.reference)
+        IVAR_VARIANTS(headers_ch, BWA_MEM.out.bam, params.reference, params.gff_file)
         SAMTOOLS_DEPTH(headers_ch, BWA_MEM.out.bam, params.reference)
     }
 }
