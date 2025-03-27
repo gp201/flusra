@@ -1,0 +1,8 @@
+name: merge_genoflu_results
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.12.3
+  - pip:
+      - pandas==2.2.2

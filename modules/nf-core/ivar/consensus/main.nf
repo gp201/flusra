@@ -1,5 +1,5 @@
 process IVAR_CONSENSUS {
-    tag "$meta.id - $referenceGene"
+    tag "${meta.id} - ${referenceGene}"
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
@@ -12,15 +12,15 @@ process IVAR_CONSENSUS {
     val consensus_min_depth
 
     output:
-    path  "*_cns.fa",         emit: consensus
-    path  "versions.yml", emit: versions
+    tuple val(meta), path("*_cns.fa"), emit: consensus
+    path "versions.yml", emit: versions
 
     script:
     def gene = referenceGene.split("\\|")[0]
     """
-    samtools index $bamFile
+    samtools index ${bamFile}
 
-    samtools mpileup -r \"$referenceGene\" -A -d 0 -aa -Q 0 $bamFile | ivar consensus -p ${meta.id}_${gene}_cns -t $consensus_threshold -m $consensus_min_depth
+    samtools mpileup -r \"${referenceGene}\" -A -d 0 -aa -Q 0 ${bamFile} | ivar consensus -p ${meta.id}_${gene}_cns -t ${consensus_threshold} -m ${consensus_min_depth}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -30,6 +30,7 @@ process IVAR_CONSENSUS {
     """
 
     stub:
+    def gene = referenceGene.split("\\|")[0]
     """
     touch ${meta.id}_${gene}_cns.fa
 
