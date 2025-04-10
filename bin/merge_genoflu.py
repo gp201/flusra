@@ -87,7 +87,6 @@ def merge_genoflu_results(input_dir: str, output_file: str, existing_results: st
     else:
         merged_results_df = new_results_df
 
-    merged_results_df = merged_results_df.sort_index()
     merged_results_df.to_csv(output_file, sep="\t", index=True, header=True)
 
 
