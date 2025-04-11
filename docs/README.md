@@ -3,7 +3,7 @@
 You can run the pipeline with the following command:
 
 ```bash
-nextflow run https://github.com/gp201/flusra.git -r 'main' -c /nextflow.config -profile <mamba,conda>
+nextflow run https://github.com/andersen-lab/flusra.git -r 'main' -c /nextflow.config -profile <mamba,conda>
 ```
 
 ## Parameters in the `nextflow.config` file
@@ -19,4 +19,4 @@ nextflow run https://github.com/gp201/flusra.git -r 'main' -c /nextflow.config -
 
 If you want to run the pipeline with a different configuration, you can create a new `nextflow.config` file and provide the path to the `-c` option.
 
-Please report any issues and suggestions regarding the pipeline to the [issue tracker](https://github.com/gp201/flusra/issues).
+Please report any issues and suggestions regarding the pipeline to the [issue tracker](https://github.com/andersen-lab/flusra/issues).
