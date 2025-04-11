@@ -14,7 +14,7 @@ jobs:
       run:
         shell: bash -el {0}
     env:
-      NXF_VER: "24.10.2"
+      NXF_VER: "24.10.5"
       NXF_WORK: ${{ github.workspace }}/work
     steps:
       - name: Free disk space
