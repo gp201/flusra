@@ -16,8 +16,7 @@ workflow PROCESS_SRA {
     BWA_MEM(sra_samples_ch, params.reference)
 
     // Generate a tuple of genes from the reference fasta file
-    Channel
-        .from(readFastaHeaders(params.reference))
+    Channel.from(readFastaHeaders(params.reference))
         .set { genes_ch }
 
     IVAR_CONSENSUS(
@@ -72,7 +71,7 @@ workflow PROCESS_SRA {
         IVAR_VARIANTS.out.versions,
         SAMTOOLS_DEPTH.out.versions,
         GENOFLU.out.versions,
-        MERGE_GENOFLU_RESULTS.out.versions
+        MERGE_GENOFLU_RESULTS.out.versions,
     )
 
     emit:

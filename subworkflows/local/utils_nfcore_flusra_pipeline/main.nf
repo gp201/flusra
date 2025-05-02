@@ -8,7 +8,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { FETCH_SRA_METADATA        } from '../../../modules/local/fetch_sra_metadata'
+include { FETCH_SRA_METADATA } from '../../../modules/local/fetch_sra_metadata'
 
 /*
 ========================================================================================
@@ -62,7 +62,6 @@ def softwareVersionsToYAML(ch_versions) {
 }
 
 workflow PIPELINE_INITIALISATION {
-
     take:
     bioproject
     email
@@ -74,16 +73,16 @@ workflow PIPELINE_INITIALISATION {
 
     FETCH_SRA_METADATA(bioproject, email, sra_metadata_file, params.trimming_config, params.check_retracted)
 
-    FETCH_SRA_METADATA.out.new_samples.splitCsv(header: true, sep: '\t')
+    FETCH_SRA_METADATA.out.new_samples
+        .splitCsv(header: true, sep: '\t')
         .map { row ->
-            meta = [
+            def meta = [
                 id: row.Run.toString(),
                 process_flag: row.process_flag.toBoolean(),
                 milk_flag: row.is_milk.toBoolean(),
                 trimming_flag: row.containsKey('global_trimming') && row.global_trimming
-                            ? new groovy.json.JsonSlurper()
-                                .parseText(row.global_trimming.replaceAll("'", '"'))
-                            : null
+                    ? new groovy.json.JsonSlurper().parseText(row.global_trimming.replaceAll("'", '"'))
+                    : null,
             ]
             [meta, row.Run]
         }
@@ -105,7 +104,6 @@ workflow PIPELINE_INITIALISATION {
 */
 
 workflow PIPELINE_COMPLETION {
-    main:
 
     //
     // Completion summary
@@ -115,7 +113,7 @@ workflow PIPELINE_COMPLETION {
     }
 
     workflow.onError {
-        log.error "Pipeline failed."
+        log.error("Pipeline failed.")
     }
 }
 
@@ -130,11 +128,13 @@ workflow PIPELINE_COMPLETION {
 def completionSummary() {
     if (workflow.success) {
         if (workflow.stats.ignoredCount == 0) {
-            log.info "[$workflow.manifest.name]\033[0;32m Pipeline completed successfully\033[0m-"
-        } else {
-            log.info "[$workflow.manifest.name]\033[0;33m Pipeline completed successfully, but with errored process(es)\033[0m-"
+            log.info("[${workflow.manifest.name}]\033[0;32m Pipeline completed successfully\033[0m-")
         }
-    } else {
-        log.info "[$workflow.manifest.name]\033[0;31m Pipeline completed with errors\033[0m-"
+        else {
+            log.info("[${workflow.manifest.name}]\033[0;33m Pipeline completed successfully, but with errored process(es)\033[0m-")
+        }
+    }
+    else {
+        log.info("[${workflow.manifest.name}]\033[0;31m Pipeline completed with errors\033[0m-")
     }
 }
