@@ -9,6 +9,9 @@ workflow FLUSRA {
     samples_ch
 
     main:
+
+    ch_versions = Channel.empty()
+
     if (params.fastq_dump_path) {
         // Allow for the user to provide the fastq files directly instead of fetching from SRA
         Channel.fromFilePairs("${params.fastq_dump_path}/*_{1,2}.fastq", flat: false)
@@ -27,6 +30,11 @@ workflow FLUSRA {
         // Fetch fastq files from SRA
         SRATOOLS_PREFETCH(samples_ch)
         SRATOOLS_FASTERQDUMP(SRATOOLS_PREFETCH.out.sra)
+
+        ch_versions = ch_versions.mix(
+            SRATOOLS_PREFETCH.out.versions,
+            SRATOOLS_FASTERQDUMP.out.versions
+        )
         reads_ch = SRATOOLS_FASTERQDUMP.out.reads
     }
 
@@ -43,6 +51,7 @@ workflow FLUSRA {
     }.set { branchedFastqCh }
 
     branchedFastqCh.doTrim | FASTP
+    ch_versions = ch_versions.mix(FASTP.out.versions)
 
     output_ch = branchedFastqCh.noTrim.mix(FASTP.out.trimmed_reads)
 
@@ -55,9 +64,14 @@ workflow FLUSRA {
         sample_reads_input
             .samples
             .filter { it != null } | PROCESS_SRA
+        ch_versions = ch_versions.mix(PROCESS_SRA.out.versions)
 
         sample_reads_input
             .milk
             .filter { it != null } | MILK_FREYJA
+        ch_versions = ch_versions.mix(MILK_FREYJA.out.versions)
     }
+
+    emit:
+    versions = ch_versions
 }

@@ -16,6 +16,51 @@ include { FETCH_SRA_METADATA        } from '../../../modules/local/fetch_sra_met
 ========================================================================================
 */
 
+//
+// Generate workflow version string
+//
+def getWorkflowVersion() {
+    def version_string = "" as String
+    if (workflow.manifest.version) {
+        def prefix_v = workflow.manifest.version[0] != 'v' ? 'v' : ''
+        version_string += "${prefix_v}${workflow.manifest.version}"
+    }
+
+    if (workflow.commitId) {
+        def git_shortsha = workflow.commitId.substring(0, 7)
+        version_string += "-g${git_shortsha}"
+    }
+
+    return version_string
+}
+
+//
+// Get software versions for pipeline
+//
+def processVersionsFromYAML(yaml_file) {
+    def yaml = new org.yaml.snakeyaml.Yaml()
+    def versions = yaml.load(yaml_file).collectEntries { k, v -> [k.tokenize(':')[-1], v] }
+    return yaml.dumpAsMap(versions).trim()
+}
+
+//
+// Get workflow version for pipeline
+//
+def workflowVersionToYAML() {
+    return """
+    Workflow:
+        ${workflow.manifest.name}: ${getWorkflowVersion()}
+        Nextflow: ${workflow.nextflow.version}
+    """.stripIndent().trim()
+}
+
+//
+// Get channel of software versions used in pipeline in YAML format
+//
+def softwareVersionsToYAML(ch_versions) {
+    return ch_versions.unique().map { version -> processVersionsFromYAML(version) }.unique().mix(Channel.of(workflowVersionToYAML()))
+}
+
 workflow PIPELINE_INITIALISATION {
 
     take:
@@ -24,6 +69,8 @@ workflow PIPELINE_INITIALISATION {
     sra_metadata_file
 
     main:
+
+    ch_versions = Channel.empty()
 
     FETCH_SRA_METADATA(bioproject, email, sra_metadata_file, params.trimming_config, params.check_retracted)
 
@@ -42,8 +89,13 @@ workflow PIPELINE_INITIALISATION {
         }
         .set { samples_to_process }
 
+    ch_versions = ch_versions.mix(
+        FETCH_SRA_METADATA.out.versions
+    )
+
     emit:
     samples_to_process = samples_to_process
+    versions = ch_versions
 }
 
 /*
