@@ -10,11 +10,13 @@ workflow PROCESS_SRA {
     sra_samples_ch
 
     main:
+
+    ch_versions = Channel.empty()
+
     BWA_MEM(sra_samples_ch, params.reference)
 
     // Generate a tuple of genes from the reference fasta file
-    Channel
-        .from(readFastaHeaders(params.reference))
+    Channel.from(readFastaHeaders(params.reference))
         .set { genes_ch }
 
     IVAR_CONSENSUS(
@@ -62,6 +64,18 @@ workflow PROCESS_SRA {
         params.variant_threshold,
         params.variant_min_depth,
     )
+
+    ch_versions = ch_versions.mix(
+        BWA_MEM.out.versions,
+        IVAR_CONSENSUS.out.versions,
+        IVAR_VARIANTS.out.versions,
+        SAMTOOLS_DEPTH.out.versions,
+        GENOFLU.out.versions,
+        MERGE_GENOFLU_RESULTS.out.versions,
+    )
+
+    emit:
+    versions = ch_versions
 }
 
 def readFastaHeaders(fastaFile) {
