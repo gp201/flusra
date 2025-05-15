@@ -18,7 +18,7 @@ process BWA_MEM {
 
     bwa mem \\
         -t ${task.cpus} \\
-        -P "reference" \\
+        "reference" \\
         ${reads} \\
         | samtools view \\
             -F 4 -b \\
