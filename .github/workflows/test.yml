@@ -24,7 +24,7 @@ jobs:
           sudo rm -rf /usr/local/lib/android
           sudo docker image prune --all --force || true
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Cache envs
         id: cache-envs
         uses: actions/cache@v4
