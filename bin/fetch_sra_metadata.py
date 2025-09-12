@@ -318,7 +318,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Fetch SRA metadata for a BioProject.')
     parser.add_argument('-b', '--bioproject_ids', type=str, required=True, help='BioProject ID to monitor. Multiple IDs should be separated by commas.')
     parser.add_argument('-e', '--email', type=str, required=True, help='Email address for Entrez')
-    parser.add_argument('-m', '--metadata', type=str, required=True, help='Path to old metadata file')
+    parser.add_argument('-m', '--metadata', type=str, required=False, help='Path to old metadata file')
     parser.add_argument('-t', '--trimming_config', type=str, required=False, help='Path to trimming yaml file')
     parser.add_argument('-r', '--check_retracted', action='store_true', help='Check for retracted SRA runs')
     return parser.parse_args()
@@ -347,13 +347,25 @@ def main():
     """
 
     args = parse_args()
-
+    
+    # Resolve metadata path: use provided path or build a sensible default from bioproject ids
+    if args.metadata:
+        metadata_path = args.metadata
+    else:
+        proj_tag = "_".join([bid.strip() for bid in args.bioproject_ids.split(',') if bid.strip()]) or "sra"
+        metadata_path = f"{proj_tag}_metadata.csv"
+    
     # Process BioProject IDs
     bioproject_ids = [bid.strip() for bid in args.bioproject_ids.split(',') if bid.strip()]
     search_term = " OR ".join(f"{bid}[BioProject]" for bid in bioproject_ids)
 
     new_metadata = get_new_srps(search_term, args.email)
-    prev_metadata = pd.read_csv(args.metadata)
+    # Try to read previous metadata from the resolved metadata_path; if missing use empty df
+    try:
+        prev_metadata = pd.read_csv(metadata_path)
+    except (FileNotFoundError, pd.errors.EmptyDataError):
+        print(f"Metadata file {metadata_path} not found or empty, using empty DataFrame.")
+        prev_metadata = pd.DataFrame(columns=FIELDS.keys())
 
     new_sras = new_metadata.loc[~new_metadata['Run'].isin(prev_metadata['Run'])]
     combined_metadata = prev_metadata.copy()
@@ -380,7 +392,7 @@ def main():
             save_columns.append('global_trimming')
 
         new_sras[save_columns].to_csv(
-            args.metadata.replace('.csv', '_to_process.tsv'),
+            metadata_path.replace('.csv', '_to_process.tsv'),
             index=False,
             sep='\t'
         )
@@ -389,6 +401,8 @@ def main():
         # Check for retracted runs and update metadata accordingly
         retracted_runs = check_retracted_runs(prev_metadata, new_metadata)
         combined_metadata['is_retracted'] = combined_metadata['Run'].isin(retracted_runs)
+        # ensure is_retracted is boolean
+        combined_metadata['is_retracted'] = combined_metadata['is_retracted'].astype(bool)
 
         # Ensure the retraction detection date column exists
         if 'retraction_detection_date_utc' not in combined_metadata.columns:
@@ -399,10 +413,14 @@ def main():
         mask = combined_metadata['is_retracted'] & combined_metadata['retraction_detection_date_utc'].isna()
         combined_metadata.loc[mask, 'retraction_detection_date_utc'] = now_str
 
+        # assert that all retracted runs have a detection date and no non-retracted runs have a date
+        assert combined_metadata.loc[combined_metadata['is_retracted'], 'retraction_detection_date_utc'].notna().all()
+        assert combined_metadata.loc[~combined_metadata['is_retracted'], 'retraction_detection_date_utc'].isna().all()
+
     if combined_metadata.equals(prev_metadata):
         print("No new updates found.")
     else:
-        updated_path = args.metadata.replace('.csv', '_updated.csv')
+        updated_path = metadata_path.replace('.csv', '_updated.csv')
         combined_metadata.to_csv(updated_path, index=False)
         print(f"Updated metadata saved to {updated_path}")
 
