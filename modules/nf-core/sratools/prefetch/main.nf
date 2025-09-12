@@ -14,7 +14,7 @@ process SRATOOLS_PREFETCH {
     when:
     task.ext.when == null || task.ext.when
 
-    script:
+    shell:
     args = '5 1 100'
     // <num retries> <base delay in seconds> <max delay in seconds>
     template('retry_with_backoff.sh')
