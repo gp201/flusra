@@ -6,6 +6,7 @@ updates:
     schedule:
       interval: "monthly"
   - package-ecosystem: "conda"
-    directory: "/"
+    directories:
+      - "**/*"
     schedule:
       interval: "monthly"
