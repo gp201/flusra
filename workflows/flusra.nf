@@ -25,7 +25,7 @@ workflow FLUSRA {
                 by: 1,
                 failOnDuplicate: true,
             )
-            .map { sra, meta, reads ->
+            .map { _sra, meta, reads ->
                 tuple(meta, reads)
             }
             .set { reads_ch }
@@ -71,14 +71,10 @@ workflow FLUSRA {
         .set { sample_reads_input }
 
     if (!params.fetch_and_pull) {
-        sample_reads_input.samples.filter { it
-            != null }
-            | PROCESS_SRA
+        sample_reads_input.samples.filter { it != null } | PROCESS_SRA
         ch_versions = ch_versions.mix(PROCESS_SRA.out.versions)
 
-        sample_reads_input.milk.filter { it
-            != null }
-            | MILK_FREYJA
+        sample_reads_input.milk.filter { it != null } | MILK_FREYJA
         ch_versions = ch_versions.mix(MILK_FREYJA.out.versions)
     }
 
